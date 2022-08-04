@@ -21,11 +21,4 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     #下划线转驼峰
     map-underscore-to-camel-case: true
-pagehelper:
-  reasonable: true
-  supportMethodsArguments: true
-  params: count=countSql
 
-#指定数据库，可选值有【mysql、oracle、sqlserver】
-om:
-  database: mysql

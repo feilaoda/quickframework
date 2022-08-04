@@ -1,4 +1,3 @@
-#开发环境配置数据源指向不同机器IP
 spring:
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
