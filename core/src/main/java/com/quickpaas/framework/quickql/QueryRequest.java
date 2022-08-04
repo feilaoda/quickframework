@@ -9,13 +9,12 @@ import java.util.List;
 
 @Data
 public class QueryRequest {
-    private Class<? extends BaseDomain> clz;
+    private Class<?> clz;
     private String clazz;
     private String name;
     private List<QueryFilter> filters;
     private List<QueryField> fields;
     private List<String> orderBy;
     private QueryPage page;
-    private boolean deepQuery;
     private Integer version;
 }

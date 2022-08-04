@@ -2,10 +2,10 @@ package com.quickpaas.framework.cache;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.quickpaas.framework.annotation.*;
 import com.quickpaas.framework.domain.JoinRelation;
 import com.quickpaas.framework.domain.RelationType;
 import com.quickpaas.framework.exception.QuickException;
-import com.quickpaas.framework.persistence.annotation.*;
 import com.quickpaas.framework.utils.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -75,56 +75,56 @@ public class ClassCache {
                 Field[] fields = clz.getDeclaredFields();
                 Map<String, JoinRelation> joinEntities = new HashMap<>();
                 Arrays.stream(fields).forEach(field -> {
-                    Join join = field.getAnnotation(Join.class);
-                    if (join != null) {
-                        ManyToMany manyToMany = field.getAnnotation(ManyToMany.class);
-                        ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
-                        OneToMany oneToMany = field.getAnnotation(OneToMany.class);
-                        OneToOne oneToOne = field.getAnnotation(OneToOne.class);
+//                    Join join = field.getAnnotation(Join.class);
+                    ManyToMany manyToMany = field.getAnnotation(ManyToMany.class);
+                    ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
+                    OneToMany oneToMany = field.getAnnotation(OneToMany.class);
+                    OneToOne oneToOne = field.getAnnotation(OneToOne.class);
+                    if (manyToMany != null || manyToOne != null || oneToMany != null || oneToOne != null ) {
                         JoinRelation relation = new JoinRelation();
                         if(manyToMany != null) {
                             relation.setRelationType(RelationType.ManyToMany);
-                            if(manyToMany.targetDomain().equals(void.class)) {
+                            if(manyToMany.target().equals(void.class)) {
                                 ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
                                 if(parameterizedType != null) {
                                     relation.setTarget((Class<?>)parameterizedType.getActualTypeArguments()[0]);
                                 }else {
-                                    throw new QuickException("Field is not GenericType");
+                                    throw new QuickException("Field "+ field.getName() + " is not GenericType");
                                 }
                             }else {
-                                relation.setTarget(manyToMany.targetDomain());
+                                relation.setTarget(manyToMany.target());
                             }
-                            relation.setMiddle(manyToMany.middleDomain());
-                            relation.setJoins(new String[] {manyToMany.leftMappedField(), manyToMany.rightMappedField()});
+                            relation.setMiddle(manyToMany.joinEntity());
+                            relation.setJoins(new String[] {manyToMany.leftMappedBy(), manyToMany.rightMappedBy()});
                         }else if(manyToOne != null) {
                             relation.setRelationType(RelationType.ManyToOne);
-                            if(manyToOne.targetDomain().equals(void.class)) {
+                            if(manyToOne.target().equals(void.class)) {
                                 relation.setTarget(field.getType());
                             }else {
-                                relation.setTarget(manyToOne.targetDomain());
+                                relation.setTarget(manyToOne.target());
                             }
-                            relation.setJoins(new String[]{manyToOne.mappedField()});
+                            relation.setJoins(new String[]{manyToOne.mappedBy()});
                         }else if(oneToMany != null) {
                             relation.setRelationType(RelationType.OneToMany);
-                            if(oneToMany.targetDomain().equals(void.class)) {
+                            if(oneToMany.target().equals(void.class)) {
                                 ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
                                 if(parameterizedType != null) {
                                     relation.setTarget((Class<?>)parameterizedType.getActualTypeArguments()[0]);
                                 }else {
-                                    throw new QuickException("Field is not GenericType");
+                                    throw new QuickException("Field "+ field.getName() + " is not GenericType");
                                 }
                             }else {
-                                relation.setTarget(oneToMany.targetDomain());
+                                relation.setTarget(oneToMany.target());
                             }
-                            relation.setJoins(new String[]{oneToMany.mappedField()});
+                            relation.setJoins(new String[]{oneToMany.mappedBy()});
                         }else if(oneToOne != null) {
                             relation.setRelationType(RelationType.OneToOne);
-                            if(oneToOne.targetDomain().equals(void.class)) {
+                            if(oneToOne.target().equals(void.class)) {
                                 relation.setTarget(field.getType());
                             }else {
-                                relation.setTarget(oneToOne.targetDomain());
+                                relation.setTarget(oneToOne.target());
                             }
-                            relation.setJoins(new String[]{oneToOne.mappedField()});
+                            relation.setJoins(new String[]{oneToOne.mappedBy()});
                         }else {
                             throw new QuickException("Relationship config error, class: {}, field: {}", clz.getName(), field.getName());
                         }

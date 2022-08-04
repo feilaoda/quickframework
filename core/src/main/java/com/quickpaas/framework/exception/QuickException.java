@@ -15,14 +15,17 @@ public class QuickException extends RuntimeException{
 
     public QuickException(String message) {
         super(message);
+        code = 500;
     }
 
     public QuickException(String message, Throwable cause) {
         super(message, cause);
+        code = 500;
     }
 
     public QuickException(Throwable cause) {
         super(cause);
+        code = 500;
     }
 
     public QuickException(String format, Object... data) {

@@ -1,0 +1,31 @@
+server:
+  port: 8181
+
+spring:
+  main:
+    allow-circular-references: true
+  profiles:
+    active: dev
+  jackson:
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  resources:
+    static-locations: classpath:/static/,classpath:/views/
+
+mybatis:
+  mapperLocations: classpath:mapper/**/*.xml
+
+mybatis-plus:
+  configuration:
+    #配置控制台打印完整带参数SQL语句
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    #下划线转驼峰
+    map-underscore-to-camel-case: true
+pagehelper:
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+
+#指定数据库，可选值有【mysql、oracle、sqlserver】
+om:
+  database: mysql

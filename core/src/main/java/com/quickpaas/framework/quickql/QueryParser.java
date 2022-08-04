@@ -50,7 +50,7 @@ public class QueryParser {
             clz = classCache.findClass(name);
         }
         query.setClz((Class)clz);
-        Object argsObject = jsonObject.getMap("filter");
+        Object argsObject = jsonObject.getMap("where");
         if (argsObject != null && argsObject instanceof Map) {
             Map<String, Object> argsMap = (Map) argsObject;
             List<Argument> args = parseQueryArguments(argsMap);
@@ -97,21 +97,26 @@ public class QueryParser {
             clz = classCache.findClass(query.getName());
         }
         request.setClz((Class)clz);
-        Map<String, FilterValue> filtersMap = query.getWheres();
+//        Map<String, FilterValue> filtersMap = query.getWhere();
+        Map<String, Object> filtersMap = query.getWhere();
+
         if (filtersMap != null) {
-            Map<String, Object> argsMap = new HashMap<>();
-            filtersMap.forEach((key, value) -> {
-                Map<String, Object> values = new HashMap<>();
-                values.put(SPECLICAL_DOT+value.getOp().name(), value.getValue());
-                argsMap.put(key, values);
-            });
-            List<Argument> args = parseQueryArguments(argsMap);
+            List<Argument> args = parseQueryArguments(filtersMap);
             List<QueryFilter> fields = parseArgsToFields(clz, args);
             request.setFilters(fields);
+//            Map<String, Object> argsMap = new HashMap<>();
+//            filtersMap.forEach((key, value) -> {
+//                Map<String, Object> values = new HashMap<>();
+//                values.put(SPECLICAL_DOT+value.getOp().name(), value.getValue());
+//                argsMap.put(key, values);
+//            });
+//            List<Argument> args = parseQueryArguments(argsMap);
+//            List<QueryFilter> fields = parseArgsToFields(clz, args);
+//            request.setFilters(fields);
         } else {
             request.setFilters(new ArrayList<>());
         }
-        Map<String, Object> queryMap = query.getFields();
+        Map<String, Object> queryMap = query.fieldsToMap();
         if (queryMap != null) {
             List<QueryField> fields = parseQueryFields(queryMap);
             request.setFields(fields);
@@ -153,6 +158,14 @@ public class QueryParser {
         for (Map.Entry<String, Object> entry : argsMap.entrySet()) {
             String key = entry.getKey();
             Object val = entry.getValue();
+            if(val instanceof FilterValue) {
+                FilterValue filterValue = (FilterValue)val;
+                ArgumentValue opValue = new ArgumentValue();
+                opValue.setOp(filterValue.getOp());
+                opValue.setValue(filterValue.getValue());
+                opValue.setName(key);
+                args.add(opValue);
+            }else
             if (key.startsWith(SPECLICAL_DOT)) {
                 String op = key.substring(1).toUpperCase();
                 if (op.equals(AND_OP) || op.equals(OR_OP)) {
@@ -230,7 +243,7 @@ public class QueryParser {
         OpValue opValue = new OpValue();
         opValue.setName(opStr);
         if (value instanceof String || value instanceof Number || value instanceof List) {
-            FilterOp op = FilterOp.valueOf(opStr);
+            FilterOp op = FilterOp.parse(opStr);
             opValue.setOp(op);
             opValue.setValue(value);
         } else if (value instanceof Map) {
@@ -243,7 +256,7 @@ public class QueryParser {
     private ArgumentValue parseQueryOpValue(Map<String, Object> argsMap) {
         for (Map.Entry<String, Object> entry : argsMap.entrySet()) {
             ArgumentValue opValue = new ArgumentValue();
-            opValue.setOp(FilterOp.valueOf(entry.getKey()));
+            opValue.setOp(FilterOp.parse(entry.getKey()));
             Object val = entry.getValue();
             if (val instanceof String || val instanceof Number || val instanceof List) {
                 opValue.setValue(val);
@@ -302,7 +315,7 @@ public class QueryParser {
 
                 }
 
-                if (opt.isPresent()) {
+                if (!opt.isPresent()) {
                     filters.add(refFilter);
                 }
             } else {
@@ -429,6 +442,13 @@ public class QueryParser {
             ArgumentValue argValue = (ArgumentValue) value;
             simpleField.setOp(argValue.getOp());
             simpleField.setValue(argValue.getValue());
+            if(argValue.getValue() instanceof List) {
+                simpleField.setValueType(List.class);
+            }else if(argValue.getValue() instanceof Set) {
+                simpleField.setValueType(Set.class);
+            }else {
+                simpleField.setValueType(field.getType());
+            }
         }
         simpleField.setFieldType(field.getType());
         return simpleField;

@@ -5,42 +5,40 @@ import com.quickpaas.framework.quickql.enums.FilterOp;
 import com.quickpaas.framework.quickql.filter.FilterValue;
 import lombok.Data;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
-public class Query<T> {
+public class Query {
     private Integer version;
     private String name;
-    private Map<String, FilterValue> wheres;
-    private Map<String, Object> fields;
+    private Map<String, Object> where;
+    private List<String> fields;
     private QueryPage page;
+    private Class<?> clazz;
 
-    public static <T> Query<T> create(String json) {
-        Query<T> query = JSON.parseObject(json, Query.class);
-        if(query.getWheres() == null) {
-            query.setWheres(new HashMap<>());
+    public static  Query create(String json) {
+        Query query = JSON.parseObject(json, Query.class);
+        if(query.getWhere() == null) {
+            query.setWhere(new HashMap<>());
         }
         if(query.getFields() == null) {
-            query.setFields(new HashMap<>());
+            query.setFields(new ArrayList<>());
         }
         return query;
     }
 
 
     public Query() {
-        wheres = new HashMap<>();
-        fields = new HashMap<>();
+        where = new HashMap<>();
+        fields = new ArrayList<>();
     }
 
     public Query(String... names) {
-        wheres = new HashMap<>();
-        fields = new HashMap<>();
+        this();
         field(names);
     }
 
-    public Query<T> eq(String name,Object value) {
+    public Query eq(String name,Object value) {
         addFilter(name, value);
         return this;
     }
@@ -87,12 +85,12 @@ public class Query<T> {
     }
 
     public Query field(String name) {
-        addField(name);
+        fields.add(name);
         return this;
     }
 
-    public Query field(String ...name) {
-        addField(name);
+    public Query field(String ...names) {
+        Arrays.stream(names).forEach(n -> fields.add(n));
         return this;
     }
 
@@ -100,21 +98,27 @@ public class Query<T> {
         addFilter(name, FilterOp.EQ, value);
     }
     public void addFilter(String name, FilterOp op, Object value) {
-//        Map<String, Object> filterValue = new HashMap<>();
-//        filterValue.put(QueryParser.SPECLICAL_DOT + op.name(), value);
-//        String columnName = name; //NameUtils.toColumnName(name);
         FilterValue filter = new FilterValue();
         filter.setOp(op);
         filter.setValue(value);
-        wheres.put(name, filter);
+        where.put(name, filter);
     }
 
-    public void addField(String ...name) {
-        for(String n: name) {
+    public Map<String, Object> fieldsToMap() {
+        Map<String, Object> fieldsMap = new HashMap<>();
+        for(String n: fields) {
             NamePath path = NamePath.createNamePath(n);
-            addField(path, fields);
+            addField(path, fieldsMap);
         }
+        return fieldsMap;
     }
+
+//    public void addField(Map<String, Object> fieldsMap, String ...name) {
+//        for(String n: name) {
+//            NamePath path = NamePath.createNamePath(n);
+//            addField(path, fieldsMap);
+//        }
+//    }
 
     public void addField(NamePath namePath, Map<String, Object> fieldsMap) {
         if(namePath.hasNext()) {
