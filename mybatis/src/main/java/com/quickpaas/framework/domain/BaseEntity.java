@@ -9,7 +9,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.Date;
 
-public class BaseEntity<T extends Serializable> implements BaseDomain{
+public class BaseEntity<T extends Serializable> extends BaseDomain<T>{
     @JsonSerialize(using = ToStringSerializer.class)
     @TableId
     protected T id;
@@ -26,7 +26,7 @@ public class BaseEntity<T extends Serializable> implements BaseDomain{
     protected Date updatedAt;
 
     @Override
-    public Serializable tid() {
+    public T tid() {
         return id;
     }
 
