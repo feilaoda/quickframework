@@ -12,7 +12,7 @@ public class SysUser extends BaseEntity<Long>{
     private String name;
     private Long departmentId;
 
-    @ManyToMany(middle=SysUserSysRole.class, leftMappedBy="userId", rightMappedBy="roleId")
+    @ManyToMany(joinEntity=SysUserSysRole.class, leftMappedBy="userId", rightMappedBy="roleId")
     @TableField(exist = false)    
     private List<SysRole> roles;
 
